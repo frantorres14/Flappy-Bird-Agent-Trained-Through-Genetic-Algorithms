@@ -1,56 +1,92 @@
-import Agente as agnt
+import numpy as np
 import random
-import RedNeuronal as rn
 
-class Seleccion:
-    def __init__(self, generacion):
-        self.len_genes = len(generacion[0].getgenes_binario())
-        self.n_agentes = len(generacion) 
-        self.suma_fitness = sum([agente.getfitness() for agente in generacion])
-        self.agentes_ordenados = sorted(generacion, key=lambda agente: agente.getfitness(), reverse=True)
-        self.izq = [self.agentes_ordenados[i] for i in range(self.n_agentes) if i % 2 != 0]
-        #esto se ordenan en reversa para poder usar .remove en 
-        self.der = [self.agentes_ordenados[i] for i in reversed(range(self.n_agentes)) if i % 2 == 0]
-        self.nextgeneration = []
+class GeneticAlgorithm:
+    def __init__(self, population):
+        """
+        Inicializa el algoritmo genético con una lista de individuos.
+        
 
-    '''
-    def _sumacuadrada(self, generacion):
-        suma = 0
-        for agente in generacion:
-            fit = agente.getfitness()
-            suma += fit**2
-        return suma
-    '''
-    #Seleccion por principio de Bateman
-    def _seleccion(self):
-        # mientras que la siguiente generacion no tenga el numero de agentes que se requieren
-        while len(self.nextgeneration) < self.n_agentes:
-            # se selecciona un agente de la izquierda y uno de la derecha
-            l_derecha = self.der.copy()
-            # se recorre la lista de agentes de la izquierda
-            for agente_izq in self.izq:
-                for agente_der in reversed(l_derecha):
-                    prob = (agente_der.getfitness())/(self.suma_fitness)
-                    if random.random() < prob :
-                        self.nextgeneration.append(self._cruza(agente_izq, agente_der))
-                        l_derecha.remove(agente_der)
-                        
-        return self.nextgeneration[:self.n_agentes]
-
-    def _cruza(self, agente_izq, agente_der):
-        hijo = agnt.Agente()
-        cadena = []
-        genes_izq = agente_izq.getgenes_binario()
-        genes_der = agente_der.getgenes_binario()
-        for i in range(0, self.len_genes, 4):
-            punto = random.randint(1,3)
-            cadena.extend(genes_izq[i:i+punto] + genes_der[i + punto: i+4])
-        hijo.setgenes(cadena)
-        hijo.goto(-150, random.randint(-200, 200))
-        hijo.Red = rn.RedNeuronal(hijo.getgenes_decimal()) 
-        return hijo
-
-    def do(self):
-        return self._seleccion()
+        """
+        self.population = population
+        
+    def ordenar_poblacion(self):
+        """
+        Ordena la población de individuos por su fitness.
+        """
+        self.population = sorted(self.population, key=lambda individuo: individuo['fitness'], reverse=True)
+        return self.population
     
- 
+    def seleccion_ruleta(self):
+        """
+        Selecciona dos individuos de la población utilizando el método de la ruleta.
+        """
+        total_fitness = sum(individuo['fitness'] for individuo in self.population)
+        probabilidades = [individuo['fitness'] / total_fitness for individuo in self.population]
+        seleccionados = np.random.choice(self.population, 2, p=probabilidades, replace=False)
+        return seleccionados
+    
+    def seleccion_torneo(self, p=0.2):
+        """
+        Selecciona dos individuos de la población utilizando el método del torneo.
+        
+        Parameters:
+        p (float): Proporción de individuos a seleccionar.
+        """
+        n = int(p * len(self.population))
+        seleccionados = np.random.choice(self.population, n, replace=False)
+        seleccionados = sorted(seleccionados, key=lambda individuo: individuo['fitness'], reverse=True)
+        return seleccionados[:2]
+    
+    def cruce_un_punto(self, padre1, padre2):
+        """
+        Realiza el cruce de un punto entre dos padres."
+        """
+        punto_cruce = np.random.randint(1, len(self.population)-1)
+        hijo = padre1['genes'][:punto_cruce] + padre2['genes'][punto_cruce:]
+        return hijo
+    
+    def cruce_dos_puntos(self, padre1, padre2):
+        """
+        Realiza el cruce de dos puntos entre dos padres."
+        """
+        punto_cruce1, punto_cruce2 = sorted(random.sample(range(1,len(self.population)-1), 2))
+        
+        hijo = np.concatenate((padre1['genes'][:punto_cruce1], padre2['genes'][punto_cruce1:punto_cruce2], padre1['genes'][punto_cruce2:]))
+        return hijo
+    
+    def mutacion(self, genes, probabilidad):
+        """
+        Realiza la mutación de un gen con una cierta probabilidad.
+        """
+        if np.random.rand() < probabilidad:
+            i = np.random.randint(0, len(genes))
+            genes[i] = 1 - genes[i]
+        return genes
+    
+    def evolucion(self, metodo_seleccion='torneo', metodo_cruce='dos_puntos', probabilidad_mutacion=0.01):
+        """
+        Realiza una generación de evolución de la población."""
+        nueva_poblacion = []
+        
+        if metodo_seleccion == 'ruleta':
+            seleccion = self.seleccion_ruleta
+        elif metodo_seleccion == 'torneo':
+            seleccion = self.seleccion_torneo
+        else:
+            raise ValueError("Método de selección no válido")
+        
+        if metodo_cruce == 'un_punto':
+            cruce = self.cruce_un_punto
+        elif metodo_cruce == 'dos_puntos':
+            cruce = self.cruce_dos_puntos
+        else:
+            raise ValueError("Método de cruce no válido")
+        
+        for _ in range(len(self.population)):
+            padre1, padre2 = seleccion(p=0.2)
+            hijo = cruce(padre1, padre2)
+            hijo= self.mutacion(hijo, probabilidad_mutacion)            
+            nueva_poblacion.append(hijo)
+        
+        return nueva_poblacion

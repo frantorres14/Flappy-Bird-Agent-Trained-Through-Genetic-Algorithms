@@ -23,26 +23,12 @@ class Pipe:
         self.pipe1.sety(y + 270)
         self.pipe2.sety(y - 270)
         self.punto_medio = y
-        self.pipe1.x1 = 0
-        self.pipe1.y1 = 0
-        self.pipe1.x2 = 0
-        self.pipe1.y2 = 0
-        self.pipe2.x1 = 0
-        self.pipe2.y1 = 0
-        self.pipe2.x2 = 0
-        self.pipe2.y2 = 0
+       
 
     def mover(self):
         self.pipe1.setx(self.pipe1.xcor() - 4)
         self.pipe2.setx(self.pipe2.xcor() - 4)
-        self.pipe1.x1 = self.pipe1.xcor() - self.pipe1.ancho/2
-        self.pipe1.y1 = self.pipe1.ycor() + self.pipe1.alto/2
-        self.pipe1.x2 = self.pipe1.xcor() + self.pipe1.ancho/2
-        self.pipe1.y2 = self.pipe1.ycor() - self.pipe1.alto/2
-        self.pipe2.x1 = self.pipe2.xcor() - self.pipe2.ancho/2
-        self.pipe2.y1 = self.pipe2.ycor() + self.pipe2.alto/2
-        self.pipe2.x2 = self.pipe2.xcor() + self.pipe2.ancho/2
-        self.pipe2.y2 = self.pipe2.ycor() - self.pipe2.alto/2
+
 
     def is_out(self):
         if self.pipe2.xcor() < -450:
@@ -51,15 +37,30 @@ class Pipe:
             self.pipe1.hideturtle()
             self.pipe2.hideturtle()
             return True
+        return False
         
     def is_in_area(self, x, y):
-        if (self.pipe1.x1 < x + 10 < self.pipe1.x2 and self.pipe1.y2 < y + 10 < self.pipe1.y1) or \
-            (self.pipe1.x1 < x - 10 < self.pipe1.x2 and self.pipe1.y2 < y + 10 < self.pipe1.y1) or \
-           (self.pipe2.x1 < x + 10< self.pipe2.x2 and self.pipe2.y2 < y - 10 < self.pipe2.y1) or \
-            (self.pipe2.x1 < x - 10 < self.pipe2.x2 and self.pipe2.y2 < y - 10 < self.pipe2.y1):
-            return True
-        else:
-            return False
+        """
+        Verifica si el punto (x, y) está dentro de los límites de los tubos.
+
+        Parámetros:
+        ----------
+        x: float
+            Coordenada x del punto.
+        y: float
+            Coordenada y del punto.
+
+        Retorna:
+        --------
+        bool: True si el punto está dentro de los límites de algún tubo, False en caso contrario.
+        """
+        def dentro_de_tubo(pipe):
+            return (
+                pipe.xcor() - pipe.ancho / 2 < x < pipe.xcor() + pipe.ancho / 2 and
+                pipe.ycor() - pipe.alto / 2 < y < pipe.ycor() + pipe.alto / 2
+            )
+
+        return dentro_de_tubo(self.pipe1) or dentro_de_tubo(self.pipe2)
         
     def get_punto_medio(self):
         return self.punto_medio

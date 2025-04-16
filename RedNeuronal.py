@@ -1,50 +1,69 @@
 import numpy as np
 
-class Neurona: 
-    def __init__(self, tipo, pesos): 
-        self.pesos = np.array(pesos)
-        if tipo == "sigmoide":
-            self.f_activacion = self.f_sigmoide
-        elif tipo == "tanh":
-            self.f_activacion = self.f_tanh
-        else:
-            raise NotImplementedError("La función de activación no está implementada")
-    
-    def f_activacion(self):
-        raise NotImplementedError("f_activacion no está implementada")
-    
-    def f_sigmoide(self, x):
-        return 1 / (1 + np.exp(-x))
-    
-    def f_tanh(self, x):
-        return np.tanh(x)
-    
-    def activate(self, inputs):
+class NeuralNetwork:
+    def __init__(self, genes, input_size=5, hidden_size=2, output_size=1):
+        """
+        Initializes a neural network with 5 input neurons, 2 hidden neurons, and 1 output neurons.
         
-        suma = np.dot(inputs, self.pesos) 
-        return self.f_activacion(suma)
+        Parameters:
+        genes (numpy.ndarray): An array of bits.
+        """
+        if not isinstance(genes, np.ndarray):
+            genes = np.array(genes, dtype=np.int8)
 
+        # Convert bit string to floating-point numbers
+        float_values = self._bits_to_floats(genes)
 
-class RedNeuronal:
-    def __init__(self, genes): #
-        self.num_entradas = 2 # numero de sensores
-        self.num_ocultas = 2 
-        self.num_salidas = 1
-        self.pesos = genes
-        #capa oculta con dos neuronas y la capa de salida con una neurona
-        self.hidden_layer = [Neurona("tanh", self.pesos[self.num_entradas*i:self.num_entradas*(i+1)]) for i in range(self.num_ocultas)]
-        self.output_layer = Neurona("sigmoide", self.pesos[self.num_entradas * self.num_ocultas:])
+        indice_input_hidden = input_size * hidden_size # 5 * 2 = 10
+        indice_bias_hidden = indice_input_hidden + hidden_size # 10 + 2 = 12
+        indice_hidden_output = indice_bias_hidden + hidden_size*output_size # 12 + 2*1 = 14
 
         
-    def output(self, inputs):
-        # Propagación hacia adelante
-        hidden_layer_outputs = [neuron.activate(inputs) for neuron in self.hidden_layer]
-        final_output = self.output_layer.activate(hidden_layer_outputs)
-        return final_output
-    
+        # Assign weights and biases with correct shapes
+        self.weights_input_hidden = float_values[:indice_input_hidden].reshape((input_size, hidden_size))
+        self.bias_hidden = float_values[indice_input_hidden:indice_bias_hidden].reshape((hidden_size,))
+        self.weights_hidden_output = float_values[indice_bias_hidden:indice_hidden_output].reshape((hidden_size, output_size))
+        self.bias_output = float_values[indice_hidden_output:].reshape((output_size,))
+
+    def _bits_to_floats(self, bits):
+        """
+        Convert a numpy array of bits into floating-point numbers between -1 and 1.
+        """
+        # Reshape bits into groups of 4
+        bits_reshaped = bits.reshape(-1, 4)
+        
+        # Convert each group of 4 bits to an integer (vectorized)
+        powers = np.array([8, 4, 2, 1])
+        integers = np.sum(bits_reshaped * powers, axis=1)
+        
+        # Scale to range [-1, 1]
+        float_values = integers / 8.0 - 1
+        
+        return float_values
+
+    def feedforward(self, inputs):
+        """
+        Perform feedforward propagation through the network.
+        
+        Parameters:
+        inputs (numpy.ndarray): Input values, should be of length 16.
+        
+        Returns:
+        numpy.ndarray: Output values between -1 and 1.
+        """
+        if not isinstance(inputs, np.ndarray):
+            inputs = np.array(inputs)
+            
+        
+        # Hidden layer
+        hidden = np.tanh(np.dot(inputs, self.weights_input_hidden) + self.bias_hidden)
+        
+        # Output layer
+        outputs = np.tanh(np.dot(hidden, self.weights_hidden_output) + self.bias_output)
+        
+        return outputs
+
     def decision(self, inputs):
-        if self.output(inputs) >= 0.5:
-            return 1
-        else:
-            return 0
- 
+        output = self.feedforward(inputs)
+        # Convert output to binary decision (0 or 1)
+        return 1 if output[0] > 0 else 0

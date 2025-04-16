@@ -1,8 +1,7 @@
 import turtle as t
-import RedNeuronal as rn
-import random 
+from RedNeuronal import NeuralNetwork as nn
+import numpy as np
 
-# Clase Agente
 class Agente(t.Turtle):
     """
     Clase que representa al pájaro que aprende a jugar Flappy Bird
@@ -61,172 +60,109 @@ class Agente(t.Turtle):
         Aumenta la aptitud del agente
     """
 
-    def __init__(self): 
+    def __init__(self, genes, x_random, y_random=0): 
         super().__init__() 
         self.penup() 
         self.shape("triangle") 
         self.shapesize(stretch_wid=1, stretch_len=1) 
-        self.color("yellow") 
+        self.color((np.random.rand(), np.random.rand(), np.random.rand()/2))
         self.speed(0) 
-        self.goto(-150, 0) 
-        self.vel_y = 0  
-        self._genes = []
-        self.fitness = 0
-        self.sensores = [0, 0] 
-        self.Red = rn.RedNeuronal(self.getgenes_decimal())
-        self.alive = True
+        self.goto(-150 + x_random, y_random) 
+        self._vel_y = 0  
+        self._sensores = [0, 0, 0, 0, 0]  # Inicializa los sensores a un valor por defecto
+        self._Red = nn(genes)
+        self._fitness = 0
+        self._genes = genes
+
 
     def _saltar(self):
-        """"
-        Determina si el agente debe saltar o no basándose en la decisión de la red neuronal
-        
-        Returns:
-        --------
-        int
-            Retorna 0 si la red neuronal decide no saltar, 10 si decide saltar
-        """
-        if self.Red.decision(self.sensores) == 0:
-            return 0 
-        else: 
-            return 10
-
+        if self._Red.decision(self._sensores) > 0:
+            return True
+        return False
+    
     def moverse(self):
         """
         Mueve al agente en el eje y
         """
-        y = self.ycor()
-        if self._saltar() == 0:
-            self.vel_y += - 1
+        if self._saltar():
+            self._vel_y = 7
         else:
-            self.vel_y = self._saltar()
-        y += self.vel_y
-        self.sety(y)  
+            self._vel_y += -0.7
+        y = self.ycor() + self._vel_y
+        self.sety(y)
+        
 
-    def primera_generacion(self):
-        """
-        Genera la primera generación de agentes con genes aleatorios
-        """ 
-        self._genes = self._generar_genes() 
-        self.goto(-150, random.randint(-200, 200))
-        self.Red = rn.RedNeuronal(self.getgenes_decimal())  
-
-    def _generar_genes(self):
-        """
-        Genera genes aleatorios
-
-        Returns:
-        --------
-        list
-            Lista de bits que representan los genes del agente
-        """
-        genes = []
-        for _ in range(0, 24): #24 alelos, 6 pesos x 4 bits
-            r = random.randint(0, 1)
-            genes.append(r)
-        return genes
-    
-    def getgenes_decimal(self):
-        """
-        Convierte los genes en decimal
-
-        Returns:
-        --------
-        list
-            Lista de valores decimales que representan los genes del agente
-        """
-        cadena = self._genes #lista de bits
-        cadena_decimal = []
-        for i in range(0, len(cadena), 4):
-            entero = cadena[i] * (2**3) + cadena[i + 1] * (2**2) + cadena[i + 2]*2 + cadena[i + 3]
-            decimal = entero / (2**3) - 1
-            cadena_decimal.append(decimal)
-        return cadena_decimal
-    
-    def getgenes_binario(self):
-        """
-        Retorna los genes en binario
-
-        Returns:
-        --------
-        list
-            Lista de bits que representan los genes del agente
-        """
-        return self._genes
-    
-    def setgenes(self, genes): 
-        """
-        Modifica los genes del agente
-
-        Parameters:
-        -----------
-        genes: list
-            Lista de bits que representan los genes del agente
-        """
-        self._genes = genes
-
-    
-    def calcular_fitness(self):
-        """
-        Calcula la aptitud del agente
-        """
-        self.fitness += 0.1
-
-    def is_alive(self):
-        """
-        Verifica si el agente está vivo
-
-        Returns:
-        --------
-        bool
-            Retorna True si el agente está vivo, False si no lo está
-        """
-        if (-290 <= self.ycor() <= 290) and (self.alive == True):
-            return True
-        else:
-            return False
-
-    def getfitness(self):
-        """
-        Retorna la aptitud del agente
-
-        Returns:
-        --------
-        int
-            Valor que representa la aptitud del agente
-        """
-        return self.fitness
     
     def detector_sensores(self, pipes):
-        """
-        Actualiza los valores de los sensores
-
-        Parameters:
-        -----------
-        pipes: list
-            Lista de tubos que representan los obstáculos
-        """
-        pipes.sort(key=lambda pipe: pipe.pipe1.xcor(), reverse = False)   
-        for pipe in pipes:
-            if self.xcor() - 10 < pipe.pipe1.xcor() + pipe.pipe1.ancho/2:
-                if (pipe.get_punto_medio() - self.ycor()) > 0:
-                    self.sensores[0] = 1
-                elif (pipe.get_punto_medio() - self.ycor()) < 0:
-                    self.sensores[0] = -1
-                else:
-                    self.sensores[0] = 0
-                if pipe.is_in_area(self.xcor(), self.ycor()):
-                    self.alive = False
-                break
-
-        self.sensores[1] = (self.ycor()/300)**2
+        x = self.xcor()
+        y = self.ycor()
         
-    def aumentar_fitness(self, x):
-        """
-        Aumenta la aptitud del agente
+        # Ordena la lista de tuberías en orden ascendente según xcor
+        pipes = pipes[0:3]
+        self._sensores = [2.5, 2.5, 2.5, 2.5, 2.5]  # Reinicia los sensores a un valor por defecto
 
-        Parameters:
-        -----------
-        x: int
-            Valor que se suma a la aptitud del agente
-        """
-        self.fitness += x
+        # Encuentra la primera tubería que no haya pasado al agente
+        for pipe in pipes:
+            if self._sensores[0] == 2.5:
+                for dist_sensor_positivo in range(20, 251, 10):
+                    self._sensores[0] = dist_sensor_positivo/100
+                    if pipe.is_in_area(x + dist_sensor_positivo, y + dist_sensor_positivo):
+                        break
+            
+            if self._sensores[1] == 2.5:
+                for dist_sensor_negativo in range(20, 251, 10):
+                    self._sensores[1] = dist_sensor_negativo/100
+                    if pipe.is_in_area(x + dist_sensor_negativo, y - dist_sensor_negativo):
+                        break
+                
+            if self._sensores[2] == 2.5:
+                for dist_sensor_superior in range(20, 251, 10):
+                    self._sensores[2] = dist_sensor_superior/100
+                    if pipe.is_in_area(x, y + dist_sensor_superior) or y + dist_sensor_superior > 300:
+                        break
+            
+            if self._sensores[3] == 2.5:
+                for dist_sensor_inferior in range(20, 251, 10):
+                    self._sensores[3] = dist_sensor_inferior/100
+                    if pipe.is_in_area(x, y - dist_sensor_inferior) or y - dist_sensor_inferior < -300:
+                        break
+
+            if self._sensores[4] == 2.5:
+                for dist_sensor_inferior in range(20, 251, 10):
+                    self._sensores[4] = dist_sensor_inferior/100
+                    if pipe.is_in_area(x + dist_sensor_negativo, y):
+                        break
+                
+    def is_alive(self, pipes):
+        if len(pipes) > 1:
+            for pipe in pipes:
+                if (pipe.is_in_area(self.xcor() + 10, self.ycor() + 10) or
+                    pipe.is_in_area(self.xcor() + 10, self.ycor() - 10) or
+                    pipe.is_in_area(self.xcor() - 10, self.ycor() + 10) or
+                    pipe.is_in_area(self.xcor() - 10, self.ycor() - 10)):
+                    return False 
+        if self.ycor() < -300 or self.ycor() > 300:
+            return False
+        return True
+    
+
+    @property
+    def fitness(self):
+        return self._fitness
+
+    @fitness.setter
+    def fitness(self, value):
+        if value < 0:
+            raise ValueError("El fitness no puede ser negativo")
+        self._fitness = value
+
+    @property
+    def genes(self):
+        return self._genes
+    
+    @genes.setter
+    def genes(self, value):
+        if not isinstance(value, list) or len(value) != 52:
+            raise ValueError("Los genes deben ser una lista de 52 elementos")
+        self._genes = value
+    
