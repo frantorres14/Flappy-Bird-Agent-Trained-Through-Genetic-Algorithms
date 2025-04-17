@@ -3,6 +3,7 @@ import turtle as t
 from Simulation import run_simulation
 from Algen import GeneticAlgorithm as GenAlg 
 import numpy as np
+ 
 
 screen = t.Screen()  # Crear una nueva pantalla de turtle
 
