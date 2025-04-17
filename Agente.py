@@ -1,5 +1,5 @@
 import turtle as t
-from RedNeuronal import NeuralNetwork as nn
+from redneuronal import NeuralNetwork as nn
 import numpy as np
 
 class Agente(t.Turtle):

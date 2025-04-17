@@ -1,7 +1,7 @@
 import random
 import turtle as t
-import Obstaculos as obst
-from Agente import Agente
+import obstaculos as obst
+from agente import Agente
 from numpy import random
 
 def run_simulation(poblacion, generacion_i, max_counter=10000, screen=None):

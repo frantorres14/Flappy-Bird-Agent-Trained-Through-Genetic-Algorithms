@@ -1,7 +1,7 @@
-import Agente as agnt
+import agente as agnt
 import turtle as t
-from Simulation import run_simulation
-from Algen import GeneticAlgorithm as GenAlg 
+from simulation import run_simulation
+from geneticalgo import GeneticAlgorithm as GenAlg 
 import numpy as np
  
 

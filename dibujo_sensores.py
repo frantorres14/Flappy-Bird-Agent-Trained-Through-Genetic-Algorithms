@@ -1,5 +1,4 @@
 import turtle as t
-import numpy as np
 
 def draw_agent_with_sensors():
     """
