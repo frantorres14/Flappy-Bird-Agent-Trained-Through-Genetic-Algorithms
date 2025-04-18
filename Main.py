@@ -6,6 +6,9 @@ import numpy as np
  
 
 screen = t.Screen()  # Crear una nueva pantalla de turtle
+# Configurar la ventana para que no se pueda redimensionar
+root = screen.getcanvas().winfo_toplevel()
+root.resizable(False, False)
 
 n_agentes = 40  # Número de agentes en la población
 n_generaciones = 100 # Número de generaciones a simular
