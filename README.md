@@ -132,12 +132,12 @@ Este proyecto está licenciado bajo la Licencia MIT - ver el archivo LICENSE par
 
 ## 👨‍💻 Autor
 
-Tu Nombre - Trabajo Inicial - [@frantorres14](https://github.com/frantorres14)
+Francisco Torres, AI developer - [@frantorres14](https://github.com/frantorres14)
 
 ---
 
 
-## ⭐️ De tu-usuario
+## ⭐️ ¡Si te gustó, apóyame!
 
 ¡Si te gusta el proyecto, no olvides dejar una estrella en GitHub!
 También puedes seguirme en mis redes para tutoriales y videos sobre IA
