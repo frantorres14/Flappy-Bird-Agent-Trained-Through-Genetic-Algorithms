@@ -8,7 +8,11 @@
 Este proyecto es una implementación del clásico juego Flappy Bird donde los agentes aprenden a jugar a través de algoritmos genéticos y redes neuronales. 
 En lugar de programar explícitamente la lógica de juego, este proyecto permite que los agentes evolucionen naturalmente a través de generaciones, aprendiendo a navegar entre obstáculos de manera cada vez más eficiente.
 
----
+
+![Agente con sensores](sensoresyagente.png)
+
+El diagrama muestra cómo el agente utiliza cinco sensores para detectar obstáculos a su alrededor. Estos sensores proporcionan información a la red neuronal del agente, que procesa los datos para tomar decisiones sobre cuándo saltar.
+
 
 ## 📊 Características Principales
 
